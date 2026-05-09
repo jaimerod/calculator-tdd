@@ -1,11 +1,8 @@
 from flask import Flask, render_template, request, jsonify
 from calculator import add, subtract, multiply, divide
-import os
+import db
 
 app = Flask(__name__, template_folder='templates')
-
-# Per-tab state: {client_id: {current_value, pending_op, current_input, just_evaluated}}
-tab_states = {}
 
 @app.after_request
 def add_no_cache(response):
@@ -16,21 +13,12 @@ def get_client_id():
     return request.json.get('client_id') if request.is_json else None
 
 def get_state():
-    cid = get_client_id()
-    if cid is None:
-        cid = 'default'
-    if cid not in tab_states:
-        tab_states[cid] = {
-            'current_value': 0,
-            'pending_op': None,
-            'current_input': '',
-            'just_evaluated': False
-        }
-    return tab_states[cid]
+    cid = get_client_id() or 'default'
+    return db.load_state(cid)
 
 def save_state(state):
     cid = get_client_id() or 'default'
-    tab_states[cid] = state
+    db.save_state(cid, state)
 
 def apply_operation():
     state = get_state()
