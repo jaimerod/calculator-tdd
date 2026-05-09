@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .calculator {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            width: 240px;
+        }
+        .display {
+            background: #222;
+            color: #4CAF50;
+            font-size: 2em;
+            padding: 10px 15px;
+            text-align: right;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            min-height: 40px;
+            overflow: hidden;
+        }
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            gap: 6px;
+        }
+        button {
+            padding: 16px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background: #e0e0e0;
+            transition: transform 0.1s, filter 0.1s;
+        }
+        button:hover {
+            background: #d0d0d0;
+        }
+        button.pressed {
+            transform: scale(0.92);
+            filter: brightness(0.7);
+        }
+        button.operator {
+            background: #FF9800;
+            color: white;
+        }
+        button.operator:hover {
+            background: #F57C00;
+        }
+        button.operator.pressed {
+            filter: brightness(0.6);
+        }
+        button.equals {
+            background: #4CAF50;
+            color: white;
+        }
+        button.equals:hover {
+            background: #45a049;
+        }
+        button.equals.pressed {
+            filter: brightness(0.6);
+        }
+        button.clear {
+            background: #f44336;
+            color: white;
+        }
+        button.clear:hover {
+            background: #d32f2f;
+        }
+        button.clear.pressed {
+            filter: brightness(0.6);
+        }
+        .tall-plus {
+            grid-row: span 2;
+        }
+        .tall-equals {
+            grid-row: span 2;
+        }
+        .wide-zero {
+            grid-column: span 2;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="display" id="display">0</div>
+        <div class="buttons" id="buttons">
+            <!-- Row 1: C  /  *  - -->
+            <button class="clear" onclick="sendAction('clear')" data-key="C">C</button>
+            <button class="operator" onclick="sendOperator('divide')" data-key="/">÷</button>
+            <button class="operator" onclick="sendOperator('multiply')" data-key="*">×</button>
+            <button class="operator" onclick="sendOperator('subtract')" data-key="-">−</button>
+            
+            <!-- Row 2: 7  8  9  + (tall) -->
+            <button onclick="appendNumber('7')" data-key="7">7</button>
+            <button onclick="appendNumber('8')" data-key="8">8</button>
+            <button onclick="appendNumber('9')" data-key="9">9</button>
+            <button class="operator tall-plus" onclick="sendOperator('add')" data-key="+">+</button>
+            
+            <!-- Row 3: 4  5  6 -->
+            <button onclick="appendNumber('4')" data-key="4">4</button>
+            <button onclick="appendNumber('5')" data-key="5">5</button>
+            <button onclick="appendNumber('6')" data-key="6">6</button>
+            
+            <!-- Row 4: 1  2  3  = (tall) -->
+            <button onclick="appendNumber('1')" data-key="1">1</button>
+            <button onclick="appendNumber('2')" data-key="2">2</button>
+            <button onclick="appendNumber('3')" data-key="3">3</button>
+            <button class="equals tall-equals" onclick="sendAction('equals')" data-key="=">=</button>
+            
+            <!-- Row 5: 0 (wide)  . -->
+            <button class="wide-zero" onclick="appendNumber('0')" data-key="0">0</button>
+            <button onclick="appendDecimal()" data-key=".">.</button>
+        </div>
+    </div>
+    <script>
+        let currentInput = '';
+        let justCalculated = false;
+        
+        function updateDisplay(text) {
+            document.getElementById('display').textContent = text;
+        }
+        
+        function highlightButton(key) {
+            // Map key names to button text for lookup
+            const keyMap = {
+                '0': '0', '1': '1', '2': '2', '3': '3', '4': '4',
+                '5': '5', '6': '6', '7': '7', '8': '8', '9': '9',
+                '.': '.',
+                '/': '÷', '*': '×', '-': '−', '+': '+',
+                'Enter': '=', '=': '=',
+                'c': 'C', 'C': 'C', 'Backspace': 'C', 'Delete': 'C'
+            };
+            
+            const btnText = keyMap[key];
+            if (!btnText) return;
+            
+            // Find button by text content
+            const buttons = document.querySelectorAll('.buttons button');
+            for (const btn of buttons) {
+                if (btn.textContent.trim() === btnText || btn.dataset.key === key) {
+                    btn.classList.add('pressed');
+                    setTimeout(() => btn.classList.remove('pressed'), 150);
+                    break;
+                }
+            }
+        }
+        
+        async function sendAction(action) {
+            try {
+                const response = await fetch('/calc', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({action: action})
+                });
+                const data = await response.json();
+                updateDisplay(data.display);
+                if (action === 'clear') {
+                    currentInput = '';
+                    justCalculated = false;
+                }
+                if (action === 'equals') {
+                    justCalculated = true;
+                }
+            } catch (e) {
+                updateDisplay('Error');
+            }
+        }
+        
+        async function sendOperator(op) {
+            justCalculated = false;
+            try {
+                const response = await fetch('/calc', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({action: 'operator', op: op})
+                });
+                const data = await response.json();
+                updateDisplay(data.display);
+                currentInput = '';
+            } catch (e) {
+                updateDisplay('Error');
+            }
+        }
+        
+        async function appendNumber(num) {
+            if (justCalculated) {
+                await sendAction('clear');
+                justCalculated = false;
+            }
+            currentInput += num;
+            try {
+                const response = await fetch('/calc', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({action: 'number', value: num})
+                });
+                const data = await response.json();
+                updateDisplay(data.display);
+            } catch (e) {
+                updateDisplay('Error');
+            }
+        }
+        
+        async function appendDecimal() {
+            if (!currentInput.includes('.')) {
+                await appendNumber(currentInput === '' ? '0.' : '.');
+            }
+        }
+        
+        document.addEventListener('keydown', function(e) {
+            const key = e.key;
+            
+            // Highlight the button first
+            highlightButton(key);
+            
+            if (key >= '0' && key <= '9') {
+                appendNumber(key);
+            } else if (key === '.') {
+                appendDecimal();
+            } else if (key === '+') {
+                sendOperator('add');
+            } else if (key === '-') {
+                sendOperator('subtract');
+            } else if (key === '*') {
+                sendOperator('multiply');
+            } else if (key === '/') {
+                e.preventDefault();
+                sendOperator('divide');
+            } else if (key === 'Enter' || key === '=') {
+                sendAction('equals');
+            } else if (key === 'c' || key === 'C' || key === 'Backspace' || key === 'Delete') {
+                e.preventDefault();
+                sendAction('clear');
+            }
+        });
+    </script>
+</body>
+</html>
