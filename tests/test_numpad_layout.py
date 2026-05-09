@@ -54,30 +54,34 @@ def test_tall_buttons_exist():
 
 def test_chaining_works_with_new_layout():
     """Full chaining test on new layout"""
+    s = requests.Session()
+    s.get(f'{base}/')
     base_url = f'{base}/calc'
-    requests.post(base_url, json={'action': 'clear'})
+    s.post(base_url, json={'action': 'clear'})
     
     # 7 × 8 = 56
-    requests.post(base_url, json={'action': 'number', 'value': '7'})
-    requests.post(base_url, json={'action': 'operator', 'op': 'multiply'})
-    requests.post(base_url, json={'action': 'number', 'value': '8'})
-    r = requests.post(base_url, json={'action': 'equals'})
+    s.post(base_url, json={'action': 'number', 'value': '7'})
+    s.post(base_url, json={'action': 'operator', 'op': 'multiply'})
+    s.post(base_url, json={'action': 'number', 'value': '8'})
+    r = s.post(base_url, json={'action': 'equals'})
     assert r.json()['display'] == '56'
     
     # ÷ 2 = 28
-    requests.post(base_url, json={'action': 'operator', 'op': 'divide'})
-    requests.post(base_url, json={'action': 'number', 'value': '2'})
-    r = requests.post(base_url, json={'action': 'equals'})
+    s.post(base_url, json={'action': 'operator', 'op': 'divide'})
+    s.post(base_url, json={'action': 'number', 'value': '2'})
+    r = s.post(base_url, json={'action': 'equals'})
     assert r.json()['display'] == '28'
 
 def test_keyboard_input():
     """Keyboard still works"""
+    s = requests.Session()
+    s.get(f'{base}/')
     base_url = f'{base}/calc'
-    requests.post(base_url, json={'action': 'clear'})
-    requests.post(base_url, json={'action': 'number', 'value': '9'})
-    requests.post(base_url, json={'action': 'operator', 'op': 'multiply'})
-    requests.post(base_url, json={'action': 'number', 'value': '9'})
-    r = requests.post(base_url, json={'action': 'equals'})
+    s.post(base_url, json={'action': 'clear'})
+    s.post(base_url, json={'action': 'number', 'value': '9'})
+    s.post(base_url, json={'action': 'operator', 'op': 'multiply'})
+    s.post(base_url, json={'action': 'number', 'value': '9'})
+    r = s.post(base_url, json={'action': 'equals'})
     assert r.json()['display'] == '81'
 
 if __name__ == '__main__':

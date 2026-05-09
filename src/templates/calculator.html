@@ -143,6 +143,30 @@
         </div>
     </div>
     <script>
+        // Per-tab isolation: each tab gets its own unique client_id via sessionStorage
+        function getClientId() {
+            let cid = sessionStorage.getItem('calc_client_id');
+            if (!cid) {
+                cid = 'tab_' + Math.random().toString(36).substr(2, 12) + '_' + Date.now();
+                sessionStorage.setItem('calc_client_id', cid);
+            }
+            return cid;
+        }
+
+        function withClientId(body) {
+            body.client_id = getClientId();
+            return body;
+        }
+
+        async function apiFetch(path, body) {
+            const response = await fetch(path, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(withClientId(body))
+            });
+            return response.json();
+        }
+
         let currentInput = '';
         let justCalculated = false;
         
@@ -187,12 +211,7 @@
         
         async function sendAction(action) {
             try {
-                const response = await fetch('/calc', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({action: action})
-                });
-                const data = await response.json();
+                const data = await apiFetch('/calc', {action: action});
                 updateDisplay(data.display);
                 if (action === 'clear') {
                     currentInput = '';
@@ -209,12 +228,7 @@
         async function sendOperator(op) {
             justCalculated = false;
             try {
-                const response = await fetch('/calc', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({action: 'operator', op: op})
-                });
-                const data = await response.json();
+                const data = await apiFetch('/calc', {action: 'operator', op: op});
                 updateDisplay(data.display);
                 currentInput = '';
             } catch (e) {
@@ -229,12 +243,7 @@
             }
             currentInput += num;
             try {
-                const response = await fetch('/calc', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({action: 'number', value: num})
-                });
-                const data = await response.json();
+                const data = await apiFetch('/calc', {action: 'number', value: num});
                 updateDisplay(data.display);
             } catch (e) {
                 updateDisplay('Error');

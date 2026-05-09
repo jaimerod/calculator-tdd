@@ -1,16 +1,20 @@
-import sys, os
+import sys, os, time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
-import requests, time
+import requests
 
 time.sleep(1)
+base = 'http://localhost:5000'
 
-def run_test(name, steps):
-    """steps: list of (action, payload, expected_display)"""
-    requests.post('http://localhost:5000/calc', json={'action': 'clear'})
-    
+def session():
+    s = requests.Session()
+    s.get(f'{base}/')
+    return s
+
+def run_test(s, steps):
+    s.post(f'{base}/calc', json={'action': 'clear'})
     for action, payload, expected in steps:
         payload['action'] = action
-        r = requests.post('http://localhost:5000/calc', json=payload)
+        r = s.post(f'{base}/calc', json=payload)
         data = r.json()
         actual = data.get('display', data.get('result', ''))
         if str(actual) != str(expected):
@@ -71,10 +75,10 @@ tests = [
     ]),
 ]
 
-passed = 0
-failed = 0
+passed = failed = 0
+s = session()
 for name, steps in tests:
-    if run_test(name, steps):
+    if run_test(s, steps):
         print(f"PASS: {name}")
         passed += 1
     else:
