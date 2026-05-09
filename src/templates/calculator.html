@@ -14,12 +14,18 @@
             margin: 0;
             background-color: #f0f0f0;
         }
+        .wrapper {
+            display: flex;
+            position: relative;
+        }
         .calculator {
             background: white;
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             width: 240px;
+            position: relative;
+            z-index: 2;
         }
         .calculator.shake {
             animation: shake 0.4s ease-in-out;
@@ -108,40 +114,141 @@
         .wide-zero {
             grid-column: span 2;
         }
+
+        /* History panel */
+        .history-toggle {
+            position: absolute;
+            left: -25px;
+            top: 10px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px 0 0 5px;
+            padding: 8px 6px;
+            cursor: pointer;
+            font-size: 14px;
+            z-index: 3;
+        }
+        .history-toggle:hover {
+            background: #45a049;
+        }
+        .history-panel {
+            position: absolute;
+            left: -253px;
+            top: 0;
+            width: 260px;
+            height: 100%;
+            background: white;
+            border-radius: 10px 0 0 10px;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            z-index: 1;
+            transition: transform 0.3s ease;
+            transform: translateX(0);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .history-panel.open {
+            transform: translateX(253px);
+        }
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .history-header h3 {
+            margin: 0;
+            font-size: 14px;
+            color: #333;
+        }
+        .history-clear-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 4px 10px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-right: 23px;
+        }
+        .history-clear-btn:hover {
+            background: #d32f2f;
+        }
+        .history-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 15px;
+        }
+        .history-entry {
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .history-entry:last-child {
+            border-bottom: none;
+        }
+        .history-entry .expr {
+            color: #666;
+        }
+        .history-entry .result {
+            color: #333;
+            font-weight: bold;
+            font-size: 15px;
+        }
+        .history-empty {
+            color: #999;
+            text-align: center;
+            padding: 20px;
+            font-size: 13px;
+        }
     </style>
 </head>
 <body>
-    <div class="calculator">
-        <div class="display" id="display">0</div>
-        <div class="buttons" id="buttons">
-            <!-- Row 1: C  /  *  - -->
-            <button class="clear" onclick="sendAction('clear')" data-key="C">C</button>
-            <button class="operator" onclick="sendOperator('divide')" data-key="/">÷</button>
-            <button class="operator" onclick="sendOperator('multiply')" data-key="*">×</button>
-            <button class="operator" onclick="sendOperator('subtract')" data-key="-">−</button>
-            
-            <!-- Row 2: 7  8  9  + (tall) -->
-            <button onclick="appendNumber('7')" data-key="7">7</button>
-            <button onclick="appendNumber('8')" data-key="8">8</button>
-            <button onclick="appendNumber('9')" data-key="9">9</button>
-            <button class="operator tall-plus" onclick="sendOperator('add')" data-key="+">+</button>
-            
-            <!-- Row 3: 4  5  6 -->
-            <button onclick="appendNumber('4')" data-key="4">4</button>
-            <button onclick="appendNumber('5')" data-key="5">5</button>
-            <button onclick="appendNumber('6')" data-key="6">6</button>
-            
-            <!-- Row 4: 1  2  3  = (tall) -->
-            <button onclick="appendNumber('1')" data-key="1">1</button>
-            <button onclick="appendNumber('2')" data-key="2">2</button>
-            <button onclick="appendNumber('3')" data-key="3">3</button>
-            <button class="equals tall-equals" onclick="sendAction('equals')" data-key="=">=</button>
-            
-            <!-- Row 5: 0 (wide)  . -->
-            <button class="wide-zero" onclick="appendNumber('0')" data-key="0">0</button>
-            <button onclick="appendDecimal()" data-key=".">.</button>
+    <div class="wrapper">
+        <button class="history-toggle" id="historyToggle" onclick="toggleHistory()">☰</button>
+        
+        <div class="history-panel" id="historyPanel">
+            <div class="history-header">
+                <h3>History</h3>
+                <button class="history-clear-btn" onclick="clearHistory()">Clear</button>
+            </div>
+            <div class="history-list" id="historyList">
+                <div class="history-empty">No calculations yet</div>
+            </div>
+        </div>
+        
+        <div class="calculator" id="calculator">
+            <div class="display" id="display">0</div>
+            <div class="buttons" id="buttons">
+                <button class="clear" onclick="sendAction('clear')" data-key="C">C</button>
+                <button class="operator" onclick="sendOperator('divide')" data-key="/">÷</button>
+                <button class="operator" onclick="sendOperator('multiply')" data-key="*">×</button>
+                <button class="operator" onclick="sendOperator('subtract')" data-key="-">−</button>
+                
+                <button onclick="appendNumber('7')" data-key="7">7</button>
+                <button onclick="appendNumber('8')" data-key="8">8</button>
+                <button onclick="appendNumber('9')" data-key="9">9</button>
+                <button class="operator tall-plus" onclick="sendOperator('add')" data-key="+">+</button>
+                
+                <button onclick="appendNumber('4')" data-key="4">4</button>
+                <button onclick="appendNumber('5')" data-key="5">5</button>
+                <button onclick="appendNumber('6')" data-key="6">6</button>
+                
+                <button onclick="appendNumber('1')" data-key="1">1</button>
+                <button onclick="appendNumber('2')" data-key="2">2</button>
+                <button onclick="appendNumber('3')" data-key="3">3</button>
+                <button class="equals tall-equals" onclick="sendAction('equals')" data-key="=">=</button>
+                
+                <button class="wide-zero" onclick="appendNumber('0')" data-key="0">0</button>
+                <button onclick="appendDecimal()" data-key=".">.</button>
+            </div>
         </div>
     </div>
+    
     <script>
         // Per-tab isolation: each tab gets its own unique client_id via sessionStorage
         function getClientId() {
@@ -167,18 +274,25 @@
             return response.json();
         }
 
+        async function apiGet(path) {
+            const cid = getClientId();
+            const response = await fetch(path + '?client_id=' + encodeURIComponent(cid));
+            return response.json();
+        }
+
         let currentInput = '';
         let justCalculated = false;
         
         function updateDisplay(text) {
             document.getElementById('display').textContent = text;
             if (text === 'Error') {
-                shakeCalculator();
+                document.getElementById('calculator').classList.remove('shake');
+                void document.getElementById('calculator').offsetWidth;
+                document.getElementById('calculator').classList.add('shake');
             }
         }
         
         function highlightButton(key) {
-            // Map key names to button text for lookup
             const keyMap = {
                 '0': '0', '1': '1', '2': '2', '3': '3', '4': '4',
                 '5': '5', '6': '6', '7': '7', '8': '8', '9': '9',
@@ -191,7 +305,6 @@
             const btnText = keyMap[key];
             if (!btnText) return;
             
-            // Find button by text content
             const buttons = document.querySelectorAll('.buttons button');
             for (const btn of buttons) {
                 if (btn.textContent.trim() === btnText || btn.dataset.key === key) {
@@ -202,11 +315,43 @@
             }
         }
         
-        function shakeCalculator() {
-            const el = document.querySelector('.calculator');
-            el.classList.remove('shake');
-            void el.offsetWidth; // Force reflow
-            el.classList.add('shake');
+        // History functions
+        let historyOpen = false;
+        
+        async function refreshHistory() {
+            try {
+                const data = await apiGet('/history');
+                const list = document.getElementById('historyList');
+                const entries = data.history || [];
+                
+                if (entries.length === 0) {
+                    list.innerHTML = '<div class="history-empty">No calculations yet</div>';
+                    return;
+                }
+                
+                list.innerHTML = entries.map(e => 
+                    `<div class="history-entry">
+                        <div class="expr">${e.expression}</div>
+                        <div class="result">= ${e.result}</div>
+                    </div>`
+                ).join('');
+            } catch (e) {
+                // silently fail
+            }
+        }
+        
+        async function toggleHistory() {
+            const panel = document.getElementById('historyPanel');
+            historyOpen = !historyOpen;
+            panel.classList.toggle('open', historyOpen);
+            if (historyOpen) {
+                await refreshHistory();
+            }
+        }
+        
+        async function clearHistory() {
+            await apiFetch('/history/clear', {});
+            await refreshHistory();
         }
         
         async function sendAction(action) {
@@ -219,6 +364,8 @@
                 }
                 if (action === 'equals') {
                     justCalculated = true;
+                    // Always refresh history after equals
+                    refreshHistory();
                 }
             } catch (e) {
                 updateDisplay('Error');
@@ -259,7 +406,6 @@
         document.addEventListener('keydown', function(e) {
             const key = e.key;
             
-            // Highlight the button first
             highlightButton(key);
             
             if (key >= '0' && key <= '9') {
